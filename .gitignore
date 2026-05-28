@@ -1,0 +1,18 @@
+# Project workspaces — each user's own projects live alongside this repo
+# but are not part of it
+cc_academic/
+
+# Working state in any project subdir (kept for safety)
+*/.agents/
+*/experiments/
+*/ref/
+
+# Local settings
+*/.claude/settings.local.json
+.claude/settings.local.json
+
+# Editor / OS
+.DS_Store
+*.swp
+__pycache__/
+*.pyc
