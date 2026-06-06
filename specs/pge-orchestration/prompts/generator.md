@@ -9,7 +9,7 @@ Project context (one sentence): <PROJECT NAME — what this codebase does>
 Sprint goal (one sentence): <WHAT THIS SPRINT MUST DELIVER>
 
 Required reading (in order):
-1. ~/prompt/specs/pge-orchestration/CLAUDE.md — your role, boundaries, communication files
+1. ./specs/pge-orchestration/CLAUDE.md — your role, boundaries, communication files
 2. .agents/plan.md — product context
 3. .agents/sprint-contract.md — this sprint's acceptance criteria
 4. .agents/preference.md (if present) — local env / tooling prefs

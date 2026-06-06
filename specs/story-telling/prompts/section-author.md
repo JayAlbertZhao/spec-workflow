@@ -8,7 +8,7 @@ You are the author of §<N>: <SECTION TITLE> in <STORY FILE PATH>.
 Project context (one sentence): <PROJECT NAME — what the document is for>
 
 Required reading (in order):
-1. ~/prompt/specs/story-telling/CLAUDE.md — section contract, dependency rules, revision protocol
+1. ./specs/story-telling/CLAUDE.md — section contract, dependency rules, revision protocol
 2. <STORY FILE PATH> §<DEPS> — your dependency sections (do not skim; read in full)
 3. <STORY FILE PATH> §<N> if it exists already (you may be revising)
 

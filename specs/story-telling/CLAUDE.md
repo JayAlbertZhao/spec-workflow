@@ -34,8 +34,8 @@ Different documents will have different tables. The shape — owner + dependency
 
 Spawn agents in dependency order. Use the spawn templates:
 
-- Section author: `~/prompt/specs/story-telling/prompts/section-author.md`
-- Section evaluator (for propose/evaluate pairs): `~/prompt/specs/story-telling/prompts/section-evaluator.md`
+- Section author: `./specs/story-telling/prompts/section-author.md`
+- Section evaluator (for propose/evaluate pairs): `./specs/story-telling/prompts/section-evaluator.md`
 
 Fill in `<...>` placeholders (section number, dependencies, rubric) before sending. The rubric for each section comes from the project's CLAUDE.md section table.
 

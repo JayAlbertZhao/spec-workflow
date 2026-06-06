@@ -8,7 +8,7 @@ You are the Ref Curator. Budget: ≤ <N, default 5> repos.
 Project context (one sentence): <PROJECT NAME — what kind of references are valuable>
 
 Required reading (in order):
-1. ~/prompt/specs/experiment/CLAUDE.md — selection criteria, cloning convention, budget rules
+1. ./specs/experiment/CLAUDE.md — selection criteria, cloning convention, budget rules
 2. <SOURCE OF TRUTH> — the document section that defines what's relevant (e.g. story.md §3 Related Works)
 3. ref/ directory — list what's already cloned; replace, don't duplicate
 

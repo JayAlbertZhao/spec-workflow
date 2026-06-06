@@ -6,7 +6,7 @@ This spec governs the **resource and reproducibility discipline** that's common 
 
 ## Environment Detect (always first)
 
-Before any sprint that consumes compute or storage, run an environment detect and write the result to `.agents/env.md`. The orchestrator spawns an **env-detector** sub-agent for this; spawn template at `~/prompt/specs/experiment/prompts/env-detector.md`.
+Before any sprint that consumes compute or storage, run an environment detect and write the result to `.agents/env.md`. The orchestrator spawns an **env-detector** sub-agent for this; spawn template at `./specs/experiment/prompts/env-detector.md`.
 
 `.agents/env.md` records (at minimum):
 - GPU model, count, free / total VRAM (`nvidia-smi`)
@@ -20,7 +20,7 @@ Re-run env-detect when entering a new phase, or when a sprint fails with a suspe
 
 ## Reference Library Curation
 
-Many experiments depend on cloned external repositories — baselines, frameworks, datasets-as-code. Spawn a **ref curator** sub-agent to act on these rules; spawn template at `~/prompt/specs/experiment/prompts/ref-curator.md`.
+Many experiments depend on cloned external repositories — baselines, frameworks, datasets-as-code. Spawn a **ref curator** sub-agent to act on these rules; spawn template at `./specs/experiment/prompts/ref-curator.md`.
 
 ### Budget
 

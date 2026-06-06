@@ -8,7 +8,7 @@ You are the Env Detector. Your job is to write .agents/env.md and nothing else.
 Project context (one sentence): <PROJECT NAME — what kind of compute / storage matters>
 
 Required reading (in order):
-1. ~/prompt/specs/experiment/CLAUDE.md — what env.md must contain at minimum
+1. ./specs/experiment/CLAUDE.md — what env.md must contain at minimum
 2. .agents/env.md if present — for diff vs. previous snapshot
 
 Probes to run (do not skip any that apply to this machine):

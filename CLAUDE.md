@@ -1,6 +1,6 @@
 # CLAUDE.md — Base Conventions
 
-Project-agnostic rules that apply across every workspace under `~/prompt/`. Specific projects compose by declaring which `specs/*.md` apply.
+Project-agnostic rules for any project built on spec-workflow. The spec-workflow repo itself is the project root (cloned via `scripts/bootstrap.sh`); this file is loaded at session start and applies regardless of which specs the project declares.
 
 ## Language
 
@@ -9,7 +9,7 @@ Project-agnostic rules that apply across every workspace under `~/prompt/`. Spec
 
 ## Specs as Composable Concerns
 
-Specs in `~/prompt/specs/` are **orthogonal** — a project loads any combination based on what it produces and how it works. Each spec lives in its own folder:
+Specs in `./specs/` are **orthogonal** — a project loads any combination based on what it produces and how it works. Each spec lives in its own folder:
 
 ```
 specs/
@@ -27,12 +27,23 @@ specs/
 │   └── prompts/{ref-curator,env-detector}.md
 └── ui-design/
     ├── CLAUDE.md
-    └── prompts/{designer,reviewer}.md
+    └── prompts/{planner,frontend-gen,backend,reviewer}.md
 ```
 
-To choose specs for a new project, read `~/prompt/specs/route.md`. It contains the trigger table and composition examples — that's the single source of truth, not this file.
+A project's `CLAUDE.md` (appended below the base section by `scripts/bootstrap.sh`) declares the specs it uses under a `## Specs in Use` heading. Agents read those specs at session start and follow them in addition to this file. Sub-agent prompt templates are read on demand when spawning that agent.
 
-A project's `CLAUDE.md` declares the specs it uses; agents read those specs at session start and follow them in addition to this file. Sub-agent prompt templates are read on demand when spawning that agent.
+### Auto-routing on first run
+
+If `## Specs in Use` is empty or missing when you start a session:
+
+1. Read `## Brief` (project description) from the project CLAUDE.md.
+2. Read `./specs/route.md` — its rules are agent-facing and tell you how to map a brief to a spec set.
+3. Apply the rules to the brief and pick a spec set.
+4. **Write the result back** to `## Specs in Use` in the project CLAUDE.md as a bullet list of spec paths (e.g. `- ./specs/pge-orchestration/CLAUDE.md`).
+5. Write a one-sentence "why these specs" note to `.agents/status.md`.
+6. Then proceed with the user's task.
+
+The user is free to edit `## Specs in Use` afterward — adding, removing, or replacing entries. Once non-empty, subsequent sessions skip routing and just load the declared specs.
 
 ## TaskList as Work Board
 

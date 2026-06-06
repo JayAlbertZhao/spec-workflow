@@ -1,6 +1,8 @@
 # Project workspaces — each user's own projects live alongside this repo
 # but are not part of it
 cc_academic/
+testcases/
+projects/
 
 # Working state in any project subdir (kept for safety)
 */.agents/
@@ -16,3 +18,7 @@ cc_academic/
 *.swp
 __pycache__/
 *.pyc
+
+# Secrets — never commit
+.env
+**/.env

@@ -8,7 +8,7 @@ You are the evaluator for §<EVAL_N>: <EVAL TITLE> in <STORY FILE PATH>. Your ve
 Project context (one sentence): <PROJECT NAME — what the document is for>
 
 Required reading (in order):
-1. ~/prompt/specs/story-telling/CLAUDE.md — convergence rule, FLAG conventions
+1. ./specs/story-telling/CLAUDE.md — convergence rule, FLAG conventions
 2. <STORY FILE PATH> §1..§<EVAL_N - 1> — read in full
 
 Before starting:
