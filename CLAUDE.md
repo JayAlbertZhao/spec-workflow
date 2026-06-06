@@ -37,13 +37,16 @@ A project's `CLAUDE.md` (appended below the base section by `scripts/bootstrap.s
 If `## Specs in Use` is empty or missing when you start a session:
 
 1. Read `## Brief` (project description) from the project CLAUDE.md.
-2. Read `./specs/route.md` — its rules are agent-facing and tell you how to map a brief to a spec set.
-3. Apply the rules to the brief and pick a spec set.
-4. **Write the result back** to `## Specs in Use` in the project CLAUDE.md as a bullet list of spec paths (e.g. `- ./specs/pge-orchestration/CLAUDE.md`).
-5. Write a one-sentence "why these specs" note to `.agents/status.md`.
-6. Then proceed with the user's task.
+2. **List `./brief/` and read every file in it** (skip `brief/README.md` — that's the drop-zone instructions, not project material). This directory is a drop-zone the user fills with chat transcripts, requirement docs, slides, spreadsheets, screenshots, PDFs, etc. Treat its contents as authoritative project input alongside `## Brief`. If a file is binary or you can't read it directly, note that in your routing rationale rather than skipping silently.
+3. Read `./specs/route.md` — its rules are agent-facing and tell you how to map the brief + brief/ inputs to a spec set.
+4. Apply the rules and pick a spec set.
+5. **Write the result back** to `## Specs in Use` in the project CLAUDE.md as a bullet list of spec paths (e.g. `- ./specs/pge-orchestration/CLAUDE.md`).
+6. Write a one-sentence "why these specs" note to `.agents/status.md`, mentioning which `brief/` files influenced the decision.
+7. Then proceed with the user's task.
 
-The user is free to edit `## Specs in Use` afterward — adding, removing, or replacing entries. Once non-empty, subsequent sessions skip routing and just load the declared specs.
+`./brief/` remains available throughout the project, not just on first run — re-read it whenever you need to confirm a project constraint or load context for a sub-agent. The user is free to add, remove, or modify `brief/` files at any time.
+
+The user is also free to edit `## Specs in Use` afterward — adding, removing, or replacing entries. Once non-empty, subsequent sessions skip routing and just load the declared specs.
 
 ## TaskList as Work Board
 

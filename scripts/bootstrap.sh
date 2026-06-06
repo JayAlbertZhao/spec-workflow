@@ -6,16 +6,25 @@
 #   2. Discards the spec-workflow git history; initializes fresh git for your project.
 #   3. Appends `## Brief`, `## Specs in Use`, `## Project-Specific Overrides` sections
 #      to CLAUDE.md (base content stays at the top).
-#   4. Creates an empty `.agents/` directory.
+#   4. Creates `.agents/` and `brief/`; copies any --brief-from inputs into `brief/`.
 #   5. Launches `claude` in the target dir (unless --no-launch).
 #
 # Usage:
-#   bootstrap.sh [target] [--brief "<text>" | --brief-file <path>] [--no-launch]
+#   bootstrap.sh [target] [--brief "<text>"] [--brief-file <path>] [--brief-from <path>]... [--no-launch]
 #
 #   target          target directory; default "." (must be empty or non-existent)
-#   --brief         one-paragraph project description written into ## Brief
-#   --brief-file    same, but read from a file
+#   --brief         one-paragraph text written into the ## Brief section
+#   --brief-file    same, but read text from a single text/markdown file
+#   --brief-from    copy a file OR directory into the project's brief/ folder; orchestrator
+#                   reads everything under brief/ on first-run routing alongside ## Brief
+#                   text. Repeatable. Accepts any file type — chat logs, docs, xlsx,
+#                   pdfs, screenshots — the agent decides what to do with each.
 #   --no-launch     don't run `claude` at the end
+#
+# Examples:
+#   bootstrap.sh ./my-project --brief "Auto-check QA reports for inconsistencies"
+#   bootstrap.sh ./my-project --brief-from ./chat.txt --brief-from ./reqs.xlsx
+#   bootstrap.sh ./my-project --brief "summary" --brief-from ./research-folder/
 #
 # One-liner for first-time users:
 #   bash <(curl -fsSL https://raw.githubusercontent.com/JayAlbertZhao/spec-workflow/main/scripts/bootstrap.sh) [target] [--brief "..."]
@@ -25,10 +34,11 @@ set -euo pipefail
 REPO_URL="${SPEC_WORKFLOW_REPO:-https://github.com/JayAlbertZhao/spec-workflow.git}"
 TARGET=""
 BRIEF=""
+BRIEF_FROM=()
 LAUNCH=true
 
 usage() {
-  sed -n '2,22p' "${BASH_SOURCE[0]}" | sed -E 's/^# ?//'
+  sed -n '2,30p' "${BASH_SOURCE[0]}" | sed -E 's/^# ?//'
   exit "${1:-0}"
 }
 
@@ -41,6 +51,10 @@ while (( $# )); do
       [[ $# -ge 2 ]] || { echo "--brief-file needs a path" >&2; exit 2; }
       [[ -f "$2" ]] || { echo "brief file not found: $2" >&2; exit 2; }
       BRIEF="$(cat "$2")"; shift 2 ;;
+    --brief-from)
+      [[ $# -ge 2 ]] || { echo "--brief-from needs a path" >&2; exit 2; }
+      [[ -e "$2" ]] || { echo "brief-from path not found: $2" >&2; exit 2; }
+      BRIEF_FROM+=("$2"); shift 2 ;;
     --no-launch)
       LAUNCH=false; shift ;;
     -h|--help)
@@ -124,6 +138,39 @@ fi
 
 # .agents/ — communication scratch the orchestrator + sub-agents use.
 mkdir -p .agents
+
+# brief/ — drop-zone for any supporting materials the orchestrator should read
+# during first-run routing and beyond: chat transcripts, requirement docs,
+# slide decks, spreadsheets, screenshots, anything. Empty by default; users may
+# add files later by hand.
+mkdir -p brief
+if (( ${#BRIEF_FROM[@]} )); then
+  echo "==> copying ${#BRIEF_FROM[@]} brief input(s) into brief/"
+  for src in "${BRIEF_FROM[@]}"; do
+    if [[ -d "$src" ]]; then
+      cp -r "$src"/. brief/
+    else
+      cp "$src" brief/
+    fi
+  done
+fi
+if [[ ! -f brief/README.md ]]; then
+  cat > brief/README.md <<'EOF'
+# brief/
+
+Drop any supporting material here — chat transcripts, requirement docs, slide
+decks, spreadsheets, screenshots, PDFs, anything.
+
+The orchestrator reads everything in this directory on first-run routing
+alongside the `## Brief` text in `CLAUDE.md`. It also stays available as
+ongoing context: you can add or remove files at any time.
+
+Filenames don't matter; the agent infers role from content. If something is
+particularly load-bearing (a hard spec the agent must follow, a customer
+constraint that overrides defaults), call it out in `## Brief` so the agent
+gives it priority.
+EOF
+fi
 
 # Fresh git history.
 echo "==> initializing fresh git"

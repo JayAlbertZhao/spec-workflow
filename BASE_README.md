@@ -38,9 +38,29 @@ The script:
 1. Clones spec-workflow into `./my-project`
 2. Discards the upstream git history and inits a fresh repo for your project
 3. Appends `## Brief` / `## Specs in Use` / `## Project-Specific Overrides` to `CLAUDE.md`
-4. Launches `claude` in the new directory
+4. Creates `brief/` (drop-zone for supporting materials) and `.agents/` (orchestrator scratch)
+5. Launches `claude` in the new directory
 
-On first session, the orchestrator reads your `## Brief`, applies `specs/route.md`, writes the chosen spec set into `## Specs in Use`, and proceeds. You can edit the list anytime afterward.
+On first session, the orchestrator reads your `## Brief`, lists `brief/`, applies `specs/route.md`, writes the chosen spec set into `## Specs in Use`, and proceeds. You can edit the list anytime afterward.
+
+### Feeding the brief: text, files, anything
+
+`## Brief` in `CLAUDE.md` is the short text description. For anything richer — a chat transcript with stakeholders, requirement docs, slide decks, spreadsheets of test data, screenshots, sample PDFs — drop them into the project's `brief/` directory. The orchestrator reads everything there alongside the text on first-run routing and keeps it available as ongoing context.
+
+You can pre-populate `brief/` at bootstrap time:
+
+```bash
+# inline summary + supporting files
+./scripts/bootstrap.sh ./my-project \
+  --brief "Auto-check QA reports for inconsistencies" \
+  --brief-from ./customer-call-transcript.md \
+  --brief-from ./sample-reports/
+
+# everything from a folder, no inline summary (agent extracts it)
+./scripts/bootstrap.sh ./my-project --brief-from ./research-bundle/
+```
+
+`--brief-from` accepts a file or directory; directories are flattened into `brief/`. It's repeatable. Any file type is fine — the agent decides what to do with each. You can also drop new files into `brief/` after bootstrap and they will be picked up on the next session.
 
 ## Layout
 
@@ -66,6 +86,7 @@ spec-workflow/                            # this repo, also the root of your boo
 │   └── ui-design/
 │       ├── CLAUDE.md
 │       └── prompts/{planner,frontend-gen,backend,reviewer}.md
+├── brief/                                # created by bootstrap; drop chat logs / docs / xlsx / pdfs here
 └── .agents/                              # created by bootstrap; orchestrator ↔ sub-agent comms
 ```
 
