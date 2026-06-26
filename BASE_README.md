@@ -95,6 +95,21 @@ Each spec folder has:
 - **`CLAUDE.md`** — the rules. Loaded at session start when the project declares the spec.
 - **`prompts/*.md`** — sub-agent spawn templates with `<...>` placeholders. Read on demand when spawning.
 
+## Packaging Model
+
+This repo is the framework source of truth. Codex skills are scenario-specific wrappers around `specs/`, not replacements for the specs themselves.
+
+See:
+
+- [`docs/design/workflow-packaging.md`](docs/design/workflow-packaging.md)
+- [`docs/design/skill-taxonomy.md`](docs/design/skill-taxonomy.md)
+
+Skill naming uses three prefixes:
+
+- `core-*` for general workflow control and agent behavior
+- `domain-*` for domain protocols and definitions of done
+- `tool-*` for concrete tools, CLIs, services, and artifact pipelines
+
 ## Composition Examples
 
 | Project Type | Specs the router picks |
@@ -123,6 +138,7 @@ When you have a concern that's reusable across projects and orthogonal to existi
 1. `specs/<name>/CLAUDE.md` — the rules
 2. `specs/<name>/prompts/*.md` — spawn templates if the spec mandates sub-agents
 3. Add a row to the Trigger Rules table in `specs/route.md` and to Composition Sanity-Check if there's a non-obvious combination
+4. If the spec should be exposed to Codex as a trigger, add or update a scenario-specific wrapper under `skills/`
 
 If a rule is project-specific, it belongs in your project's `## Project-Specific Overrides`, not in `specs/`.
 

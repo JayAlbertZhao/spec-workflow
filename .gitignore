@@ -4,6 +4,9 @@ cc_academic/
 testcases/
 projects/
 
+# Local migrated session archives may contain private transcripts or secrets.
+docs/archive/
+
 # Working state in any project subdir (kept for safety)
 */.agents/
 */experiments/

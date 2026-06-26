@@ -1,0 +1,34 @@
+{
+  "name": "spec-workflow",
+  "version": "0.1.0",
+  "description": "Scenario-specific workflow skills for large engineering, research, structured writing, and UI design work.",
+  "author": {
+    "name": "JAZ03"
+  },
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "specs",
+    "codex",
+    "claude",
+    "agents"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Spec Workflow",
+    "shortDescription": "Scenario-specific project workflows.",
+    "longDescription": "A lightweight framework that exposes practical scenario skills for large software work, research, structured writing, UI/Ogma design review, and spec-workflow maintenance.",
+    "developerName": "JAZ03",
+    "category": "Productivity",
+    "capabilities": [
+      "Workflow",
+      "Planning",
+      "Documentation"
+    ],
+    "defaultPrompt": [
+      "Plan this large repo change.",
+      "Set up a research workflow.",
+      "Run a UI design review with Ogma."
+    ]
+  }
+}
