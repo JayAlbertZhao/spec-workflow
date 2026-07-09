@@ -14,14 +14,14 @@
 
 ## Skill Trigger Preferences
 
-Keep this file as the skill entrance and routing layer. Load the matching skill for detailed trigger conditions and workflow instead of expanding rules inline here.
+Keep this file as the skill entrance and routing layer. State the main trigger surface here; keep detailed thresholds, workflow, and role behavior inside each matching skill.
 
-- `discussion`: use for discussion-mode analysis.
-- `reporting`: use for report-mode deliverables.
-- `case-study`: use for case-style investigation.
-- `agent-team-dev`: use for larger repository or project engineering work.
-- `story-telling`: use for long-form structured writing.
-- `experiment`: use for experiment design, execution, or analysis.
+- `discussion`: use for standards, direction evaluation, plan or review critique, architecture, research, prompt, writing, product/design, or workflow discussion.
+- `reporting`: use for user-facing reports, research notes, technical analysis, reviews, audits, summaries, or evidence-backed delivery documents.
+- `case-study`: use for explicit case-study/study/案例 requests or data/example-driven investigation, including bad-case review, project evidence review, root-cause analysis, and product/workflow/research evaluation with concrete cases.
+- `agent-team-dev`: use for larger repository or project engineering work, including from-scratch projects, large existing-project changes, split/decomposition requests, multi-file features, refactors, migrations, architecture changes, implementation plans, review loops, or acceptance checks.
+- `story-telling`: use for long-form structured writing and narrative synthesis, including research narratives, research notes, RFCs, design docs, proposals, technical memos, multi-section Markdown, structured drafts, or revision workflows.
+- `experiment`: use for experiment design, execution, or analysis, including baselines, benchmarks, datasets, ablations, model evaluation, large-compute runs, reproducibility, or run artifacts.
 
 Skills may be combined when their trigger conditions overlap.
 

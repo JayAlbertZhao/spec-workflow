@@ -46,14 +46,104 @@ Scale the workflow to risk:
   dispatch bounded tasks, continue useful local work, and wait only when their
   result blocks the next local step.
 
+## Main Conversation Contract
+
+The main conversation is the planner and coordinator. It stays responsive to
+the user while side agents run outside the main conversation.
+
+The main conversation owns:
+
+- scope, assumptions, decomposition, sequencing, and task assignment;
+- user interaction, including new feedback while side agents are running;
+- integration of completed side-agent work;
+- final verification and acceptance.
+
+Do not adopt the dev or evaluator role after dispatching that role to a side
+agent. Only do local implementation or evaluation when the immediate next step
+is small, blocking, or safer to complete in the main conversation.
+
+## Non-Blocking Monitoring Loop
+
+Use side agents as background branches, not as a reason to freeze the user
+conversation.
+
+1. Spawn side agents for independent dev, explorer, or evaluator work.
+2. Continue planning, clarification, or user interaction in the main
+   conversation.
+3. Periodically check side-agent status with bounded waits or status reads.
+4. If the user gives new user feedback, decide whether to append instructions,
+   adjust scope, stop/close a side agent, or spawn a replacement.
+5. When a side agent completes, inspect its result before integrating it.
+6. Run final verification in the main conversation before claiming completion.
+
+Do not use scheduled monitors, recurring automations, or durable timer-based
+watchers for this loop. If the app closes before a persistent monitor is
+cancelled, queued monitor events can fire later in a burst. Use only
+conversation-scoped checks and explicit side-agent control.
+
+## Dispatch Prompt Templates
+
+Use XML prompt blocks when dispatching side agents. Copy only the relevant XML
+block into the side-agent request so the main conversation does not absorb the
+role instructions as its own role.
+
+Dev side agent:
+
+```xml
+<dev-agent-prompt>
+  <role>Dev side agent</role>
+  <ownership>
+    Own only the files, modules, or responsibility explicitly assigned here.
+    You are not alone in the codebase. Do not revert, overwrite, or ignore
+    changes made by others.
+  </ownership>
+  <task>
+    Implement the assigned slice.
+  </task>
+  <constraints>
+    Keep the diff scoped to the assigned slice.
+    Follow existing repository conventions.
+    Do not push, publish, deploy, or perform destructive operations.
+  </constraints>
+  <verification>
+    Run the strongest affordable targeted checks for your slice.
+    Report commands, results, changed files, and residual risks.
+  </verification>
+</dev-agent-prompt>
+```
+
+Evaluator side agent:
+
+```xml
+<evaluator-agent-prompt>
+  <role>Evaluator side agent</role>
+  <scope>
+    Review the assigned diff, files, or task outcome.
+  </scope>
+  <checks>
+    Check requirement fit, regressions, missing tests, security/privacy risk,
+    error handling, ownership boundaries, and whether the diff stayed in scope.
+  </checks>
+  <constraints>
+    Do not edit files unless explicitly asked.
+    Do not assume side-agent success reports are correct; verify against files,
+    diffs, and command output when available.
+  </constraints>
+  <output>
+    Return findings ordered by severity with file/line references when possible,
+    then residual risks and verification gaps.
+  </output>
+</evaluator-agent-prompt>
+```
+
 ## Workflow
 
 1. Inspect the repository before proposing edits: current files, tests, package
    manager, conventions, and git status.
 2. State the objective, constraints, assumptions, and failure modes.
 3. Create a short task plan with independently verifiable deliverables.
-4. For independent dev or evaluator slices, dispatch side agents with explicit
-   ownership and "do not revert others' work" instructions.
+4. For independent dev or evaluator slices, dispatch side agents with the XML
+   prompt templates above and explicit ownership.
 5. For behavior changes, use test-first discipline when practical: write or
    identify the failing check, implement the smallest fix, then rerun.
 6. Keep diffs scoped to the requested behavior. Do not refactor unrelated code.
