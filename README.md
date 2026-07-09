@@ -1,15 +1,44 @@
 # Codex Personal Skills
 
+Language: [English](README.md) | [中文](README_CN.md)
+
 This repository is the human-readable source of truth for my Codex global
 instructions and personal skills.
 
 It keeps the always-loaded `AGENTS.md` small, and moves heavier workflows into
 individual skills that Codex can load only when the task calls for them.
 
+## Repository Contents
+
+This repo contains a small Codex instruction system, not a full framework:
+
+- `README.md`: English human-facing overview and maintenance guide.
+- `README_CN.md`: Chinese human-facing overview and maintenance guide.
+- `AGENTS.md`: the global Codex instruction entry point. It keeps routing,
+  personal preferences, and standing authorization concise so every session does
+  not start with a giant prompt.
+- `skills/discussion/`: discussion-mode behavior for standards, plans,
+  architecture, prompts, product decisions, and workflow critique.
+- `skills/reporting/`: report-mode behavior for research notes, technical
+  analysis, audits, reviews, summaries, and evidence-backed deliverables.
+- `skills/case-study/`: case-style investigation for concrete examples,
+  project evidence, bad-case reviews, root-cause analysis, and product/workflow
+  evaluation.
+- `skills/agent-team-dev/`: larger repository or project engineering workflow,
+  including planner-led coordination, side-agent dispatch, review loops, and
+  acceptance checks.
+- `skills/story-telling/`: long-form structured writing and narrative synthesis,
+  including RFCs, design docs, proposals, research narratives, and revision
+  workflows.
+- `skills/experiment/`: experiment design, execution, analysis, reproducibility,
+  benchmarks, datasets, ablations, model evaluation, and run artifacts.
+
 ## What Lives Here
 
 ```text
 AGENTS.md
+README.md
+README_CN.md
 skills/
   discussion/
   reporting/

@@ -1,0 +1,116 @@
+# Codex Personal Skills
+
+语言：[中文](README_CN.md) | [English](README.md)
+
+这个仓库是我的 Codex 全局指令和个人 skills 的人类可读版本。
+
+它的设计目标很简单：让始终加载的 `AGENTS.md` 保持轻量，把较重的工作流放进独立 skill，只有任务需要时再让 Codex 加载。
+
+## 这个仓库有什么
+
+这个 repo 是一套小型 Codex instruction system，不是完整框架：
+
+- `README.md`: 英文的人类可读说明和维护指南。
+- `README_CN.md`: 中文的人类可读说明和维护指南。
+- `AGENTS.md`: Codex 全局指令入口。它只保留路由、个人偏好和常驻授权，避免每个会话都从巨大 prompt 开始。
+- `skills/discussion/`: discussion mode，用于标准制定、方案评估、架构讨论、prompt、产品决策和 workflow critique。
+- `skills/reporting/`: reporting mode，用于 research note、技术分析、audit、review、summary 和 evidence-backed deliverable。
+- `skills/case-study/`: case-style investigation，用于具体案例、项目证据、bad-case review、root-cause analysis 和产品 / workflow 评估。
+- `skills/agent-team-dev/`: 较大的仓库或项目工程工作流，包括 planner 主导协调、side-agent 分发、review loop 和 acceptance check。
+- `skills/story-telling/`: long-form structured writing 和 narrative synthesis，用于 RFC、设计文档、proposal、research narrative 和 revision workflow。
+- `skills/experiment/`: experiment design、execution、analysis、reproducibility、benchmark、dataset、ablation、model evaluation 和 run artifact。
+
+## 文件结构
+
+```text
+AGENTS.md
+README.md
+README_CN.md
+skills/
+  discussion/
+  reporting/
+  case-study/
+  agent-team-dev/
+  story-telling/
+  experiment/
+```
+
+## 系统如何工作
+
+`AGENTS.md` 是 routing layer。它应该包含：
+
+- 全局沟通风格；
+- 简洁但完整的 skill trigger preferences；
+- 常驻授权规则；
+- 个人工程偏好。
+
+详细触发阈值、workflow steps 和质量规则属于每个 skill 自己的 `SKILL.md`。这样全局 prompt 可读、可维护，也更容易 debug。
+
+## Skills
+
+- `discussion`: 用于 discussion-mode analysis，覆盖标准、计划、架构、prompt、写作、产品决策和 workflow 问题。
+- `reporting`: 用于 report-mode deliverables，例如 research notes、technical analyses、reviews、audits、summaries 和 evidence-backed Markdown reports。
+- `case-study`: 用于 case-style investigation，例如明确的 case-study 请求、bad-case review、project investigation、root-cause 或 first-principles analysis、product/workflow/research evaluation 和 concrete examples。
+- `agent-team-dev`: 用于较大的仓库或项目工程工作。它自己的 `SKILL.md` 定义 from-scratch projects、large existing projects、decomposition requests、multi-file work，以及何时缩小流程。
+- `story-telling`: 用于 long-form structured writing，例如 RFC、design docs、proposals、technical memos、multi-section Markdown 和 revision workflows。
+- `experiment`: 用于 experiment design、execution 和 analysis，包括 baselines、benchmarks、datasets、ablations、model evaluation、large compute 和 reproducibility。
+
+## Windows 安装或更新
+
+在仓库根目录运行：
+
+```powershell
+$dest = Join-Path $env:USERPROFILE ".codex\skills"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+
+$skills = "discussion", "reporting", "case-study", "agent-team-dev", "story-telling", "experiment"
+foreach ($skill in $skills) {
+  $target = Join-Path $dest $skill
+  if (Test-Path $target) {
+    Remove-Item -Recurse -Force -LiteralPath $target
+  }
+  Copy-Item -Recurse -Force ".\skills\$skill" $target
+}
+
+Copy-Item -Force .\AGENTS.md (Join-Path $env:USERPROFILE ".codex\AGENTS.md")
+```
+
+安装后重启 Codex，让全局指令和 skill metadata 在新会话中重新加载。
+
+## 推荐的外部安装
+
+这个 repo 只保存我的个人全局指令和小型 personal skills。更完整的工作环境建议单独安装以下 upstream tools 或 skills，并从它们自己的 repo 更新。
+
+| 项目 | 安装或入口 | Upstream link |
+|---|---|---|
+| Superpowers | Codex App 中使用 Plugins sidebar 安装 `Superpowers`；Codex CLI 中运行 `/plugins`，搜索 `superpowers` 后安装。 | [obra/superpowers](https://github.com/obra/superpowers) |
+| Product Design | 从 Codex plugin marketplace 安装，然后用 `@Product Design Help me get started` 开始。 | [openai/role-specific-plugins: product-design](https://github.com/openai/role-specific-plugins/tree/main/plugins/product-design) |
+| PPT Master | 优先使用 upstream install path，例如 `npx skills add hugohe3/ppt-master`；需要完整工具链时 clone repo。安装 Python dependencies 前先使用隔离环境。 | [hugohe3/ppt-master](https://github.com/hugohe3/ppt-master) |
+| YouTube Render PDF | Clone repo，并把 `skills/youtube-render-pdf` 复制到 Codex skills directory。它需要 `yt-dlp`、`ffmpeg`、ImageMagick 和 XeLaTeX 等视频、抽帧、LaTeX 工具。 | [wdkns/wdkns-skills](https://github.com/wdkns/wdkns-skills) |
+| Codex Candy Counting Benchmark | 本地 skill 名是 `codex-candy-eval`。常见 upstream script 入口是 `python codex_candy_eval.py -m <model> -r high -n 5`。 | [haowang02/codex-candy-eval](https://github.com/haowang02/codex-candy-eval) |
+
+Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin template repo：[openai/role-specific-plugins](https://github.com/openai/role-specific-plugins)。
+
+## Reference Material
+
+- [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice): 一个不错的 agentic engineering reference book。它整理了 planning、context management、subagents、commands、skills、hooks、verification、Git/PR workflow、debugging、utilities 和日常使用经验。适合作为 pattern catalogue 和 checklist source；具体规则仍需要确认适配 Codex 和本 repo 的偏好。
+- [Everything Claude Code / ECC](https://github.com/affaan-m/ECC): 另一套 agent-harness workflow paradigm。它适合研究更完整的系统设计，包括 skills、agents、hooks、rules、memory、verification loops、security posture、research-first development、parallelization 和 cross-harness packaging。主要 tradeoff 是完整范式 token-intensive 且 operationally heavy。更适合作为 comparison system 和 mechanisms source，而不是本 repo 默认 operating policy。
+- [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide): Codex system-prompt configuration、Codex Candy evaluation 及相关讨论的有用上下文。文章里的配置修改应先当作 hypothesis，本地验证后再采用。
+
+## 维护说明
+
+- 保持 `AGENTS.md` 简洁，并维持结构一致。
+- 把详细触发条件放在对应 skill，不要塞回 `AGENTS.md`。
+- 编辑 skill 后运行校验：
+
+```powershell
+$env:PYTHONUTF8 = "1"
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\discussion
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\reporting
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\case-study
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\agent-team-dev
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\story-telling
+python "$env:USERPROFILE\.codex\skills\.system\skill-creator\scripts\quick_validate.py" .\skills\experiment
+```
+
+这个仓库刻意不包含单独 plugin layer 或 `specs/` routing system。它就是 plain files，这正是它的用途。
