@@ -93,19 +93,23 @@ also useful background: [openai/role-specific-plugins](https://github.com/openai
 
 ## Reference Material
 
+- [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice):
+  a useful reference book for agentic engineering practice. It collects practical
+  guidance around planning, context management, subagents, commands, skills,
+  hooks, verification, Git/PR workflow, debugging, utilities, and daily usage.
+  Use it as a pattern catalogue and checklist source; adopt patterns only after
+  checking that they fit Codex and this repo's preferences.
+- [Everything Claude Code / ECC](https://github.com/affaan-m/ECC):
+  another workflow paradigm for agent-harness operation. It is useful for studying
+  broader system design: skills, agents, hooks, rules, memory, verification loops,
+  security posture, research-first development, parallelization, and cross-harness
+  packaging. Its main tradeoff is that the full paradigm is token-intensive and
+  operationally heavy. Treat it as a comparison system and source of mechanisms,
+  not as the default operating policy for this repo.
 - [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide):
   useful context for Codex system-prompt configuration, Codex Candy evaluation,
   and the surrounding discussion. Treat configuration changes from articles as
   hypotheses to verify locally before adopting.
-- [How Claude Code works](https://code.claude.com/docs/en/how-claude-code-works):
-  useful for capability vocabulary and command-line-agent framing.
-- [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices):
-  useful as a comparison reference for context management, verification loops,
-  planning, subagents, and long-running workflows.
-
-The Claude Code references are included as comparison material, not as operating
-policy for this repository. Read them selectively, extract mechanisms that test
-well in Codex, and avoid copying workflow rules wholesale.
 
 ## Maintenance Notes
 
