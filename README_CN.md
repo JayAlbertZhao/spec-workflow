@@ -81,13 +81,13 @@ Copy-Item -Force .\AGENTS.md (Join-Path $env:USERPROFILE ".codex\AGENTS.md")
 
 这个 repo 只保存我的个人全局指令和小型 personal skills。更完整的工作环境建议单独安装以下 upstream tools 或 skills，并从它们自己的 repo 更新。
 
-| 项目 | 安装或入口 | Upstream link |
-|---|---|---|
-| Superpowers | Codex App 中使用 Plugins sidebar 安装 `Superpowers`；Codex CLI 中运行 `/plugins`，搜索 `superpowers` 后安装。 | [obra/superpowers](https://github.com/obra/superpowers) |
-| Product Design | 从 Codex plugin marketplace 安装，然后用 `@Product Design Help me get started` 开始。 | [openai/role-specific-plugins: product-design](https://github.com/openai/role-specific-plugins/tree/main/plugins/product-design) |
-| PPT Master | 优先使用 upstream install path，例如 `npx skills add hugohe3/ppt-master`；需要完整工具链时 clone repo。安装 Python dependencies 前先使用隔离环境。 | [hugohe3/ppt-master](https://github.com/hugohe3/ppt-master) |
-| YouTube Render PDF | Clone repo，并把 `skills/youtube-render-pdf` 复制到 Codex skills directory。它需要 `yt-dlp`、`ffmpeg`、ImageMagick 和 XeLaTeX 等视频、抽帧、LaTeX 工具。 | [wdkns/wdkns-skills](https://github.com/wdkns/wdkns-skills) |
-| Codex Candy Counting Benchmark | 本地 skill 名是 `codex-candy-eval`。常见 upstream script 入口是 `python codex_candy_eval.py -m <model> -r high -n 5`。 | [haowang02/codex-candy-eval](https://github.com/haowang02/codex-candy-eval) |
+| 项目 | 用途 | 安装或入口 | Upstream link |
+|---|---|---|---|
+| Superpowers | 更完整的 skill 和 workflow collection，用于 disciplined agentic development、verification、planning 和 tool use。 | Codex App 中使用 Plugins sidebar 安装 `Superpowers`；Codex CLI 中运行 `/plugins`，搜索 `superpowers` 后安装。 | [obra/superpowers](https://github.com/obra/superpowers) |
+| Product Design | OpenAI 的 design/prototyping plugin，用于 product brief、UX audit、visual exploration、prototype 和 image-to-code workflow。 | 从 Codex plugin marketplace 安装，然后用 `@Product Design Help me get started` 开始。 | [openai/role-specific-plugins: product-design](https://github.com/openai/role-specific-plugins/tree/main/plugins/product-design) |
+| PPT Master | source-to-SVG-to-PPTX deck generation workflow，用于结构化生成幻灯片、视觉设计、live preview 和 PPTX export。 | 优先使用 upstream install path，例如 `npx skills add hugohe3/ppt-master`；需要完整工具链时 clone repo。安装 Python dependencies 前先使用隔离环境。 | [hugohe3/ppt-master](https://github.com/hugohe3/ppt-master) |
+| YouTube Render PDF | video-to-LaTeX/PDF note workflow，用于把 YouTube 技术讲座转成包含关键截图的中文教学笔记。 | Clone repo，并把 `skills/youtube-render-pdf` 复制到 Codex skills directory。它需要 `yt-dlp`、`ffmpeg`、ImageMagick 和 XeLaTeX 等视频、抽帧、LaTeX 工具。 | [wdkns/wdkns-skills](https://github.com/wdkns/wdkns-skills) |
+| Codex Candy Counting Benchmark | 轻量本地 benchmark，用于检查 Codex CLI 行为、candy-counting accuracy、reasoning token use 和 output speed。 | 本地 skill 名是 `codex-candy-eval`。常见 upstream script 入口是 `python codex_candy_eval.py -m <model> -r high -n 5`。 | [haowang02/codex-candy-eval](https://github.com/haowang02/codex-candy-eval) |
 
 Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin template repo：[openai/role-specific-plugins](https://github.com/openai/role-specific-plugins)。
 
