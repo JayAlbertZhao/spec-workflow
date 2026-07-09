@@ -1,6 +1,6 @@
 ---
 name: experiment
-description: Use for experiment design, execution, or analysis: baseline reproduction, datasets, benchmarks, ablations, model evaluation, metrics, GPU or large-compute runs, training, reproducibility, run logs, artifact hygiene, ref/ repository curation, or tasks phrased as 实验, baseline, reproduction, 复现, benchmark, dataset, ablation, evaluation, GPU, 训练, 指标, run, or experiment plan.
+description: 'Use for experiment design, execution, or analysis: baseline reproduction, datasets, benchmarks, ablations, model evaluation, metrics, GPU or large-compute runs, training, reproducibility, run logs, artifact hygiene, ref/ repository curation, or tasks phrased as 实验, baseline, reproduction, 复现, benchmark, dataset, ablation, evaluation, GPU, 训练, 指标, run, or experiment plan.'
 ---
 
 # Experiment

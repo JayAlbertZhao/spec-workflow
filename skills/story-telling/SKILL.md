@@ -1,6 +1,6 @@
 ---
 name: story-telling
-description: Use for long-form structured writing and narrative synthesis: reports, 汇报, research notes, RFCs, design docs, proposals, technical memos, multi-section Markdown, case studies, writing plans, section-by-section drafting, document review, revision cascades, or tasks phrased as 写文档, 报告, 研究笔记, 叙事, 章节, 大纲, 草稿, 评审文稿, story, narrative, long-form doc, or storytelling.
+description: 'Use for long-form structured writing and narrative synthesis: RFCs, design docs, proposals, technical memos, multi-section Markdown, writing plans, section-by-section drafting, document review, revision cascades, or tasks phrased as 写文档, 叙事, 章节, 大纲, 草稿, 评审文稿, story, narrative, long-form doc, or storytelling.'
 ---
 
 # Story Telling
@@ -37,20 +37,18 @@ Before drafting, identify:
 7. Finish with a concise reproducibility or source trace when the document is a
    report, audit, research note, or reusable analysis.
 
-## Default Structure For Reports
+## Default Structure For Long-Form Documents
 
 Use Chinese by default when writing for this user unless requested otherwise.
 
-1. Overview: compressed central answer and decision-relevant findings.
-2. Context and question.
-3. Evidence and case study.
-4. Mechanism or analysis.
-5. Implications and recommendations.
-6. Adversarial review: limits, counterexamples, uncertainty.
-7. Reproducibility trace or source notes.
+1. Purpose and reader context.
+2. Central thesis or design intent.
+3. Section sequence and what each section must prove.
+4. Evidence, examples, or decisions needed by each section.
+5. Risks, alternatives, and unresolved questions.
+6. Revision checklist.
 
-Adjust the structure when the user asks for a different artifact, such as an
-RFC, proposal, design doc, or memo.
+Use `reporting` for reports, research notes, audits, summaries, or evidence-backed delivery documents. Use `case-study` when concrete cases or examples should ground the document.
 
 ## Revision Discipline
 
