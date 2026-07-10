@@ -19,6 +19,7 @@
 - `skills/agent-team-dev/`: 较大的仓库或项目工程工作流，包括 planner 主导协调、side-agent 分发、review loop 和 acceptance check。
 - `skills/story-telling/`: long-form structured writing 和 narrative synthesis，用于 RFC、设计文档、proposal、research narrative 和 revision workflow。
 - `skills/experiment/`: experiment design、execution、analysis、reproducibility、benchmark、dataset、ablation、model evaluation 和 run artifact。
+- `scripts/update-sol-prompt.ps1`: 从 Desktop-managed bundled catalog 重新生成当前 Sol prompt override，并且只移除 commentary section。
 
 ## 文件结构
 
@@ -33,6 +34,8 @@ skills/
   agent-team-dev/
   story-telling/
   experiment/
+scripts/
+  update-sol-prompt.ps1
 ```
 
 ## 系统如何工作
@@ -95,7 +98,68 @@ Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin te
 
 - [Claude Code Best Practice](https://github.com/shanraisshan/claude-code-best-practice): 一个不错的 agentic engineering reference book。它整理了 planning、context management、subagents、commands、skills、hooks、verification、Git/PR workflow、debugging、utilities 和日常使用经验。适合作为 pattern catalogue 和 checklist source；具体规则仍需要确认适配 Codex 和本 repo 的偏好。
 - [Everything Claude Code / ECC](https://github.com/affaan-m/ECC): 另一套 agent-harness workflow paradigm。它适合研究更完整的系统设计，包括 skills、agents、hooks、rules、memory、verification loops、security posture、research-first development、parallelization 和 cross-harness packaging。主要 tradeoff 是完整范式 token-intensive 且 operationally heavy。更适合作为 comparison system 和 mechanisms source，而不是本 repo 默认 operating policy。
-- [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide): Codex system-prompt configuration、Codex Candy evaluation 及相关讨论的有用上下文。文章里的配置修改应先当作 hypothesis，本地验证后再采用。
+- [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide): Codex system-prompt configuration、Codex Candy evaluation 及相关讨论的有用上下文。其中复制的 GPT-5.5 prompt 现在属于历史案例，不应继续作为当前模板。文章里的配置修改应先当作 hypothesis，本地验证后再采用。
+
+## GPT-5.6 Sol 更新（2026-07-10）
+
+### 本机发现
+
+Codex App 当前的模型目录把 `gpt-5.6-sol` 作为一套带有专属内置指令、reasoning presets、tool mode、context policy 和 multi-agent 行为的模型运行时。本次检查时，本机 app cache 显示其 context window 为 372k、effective context window 为 95%、默认 reasoning 为 `low`、支持到 `ultra`、默认 verbosity 为 low、使用 code-mode tools，并由 catalog 选择 multi-agent version。这些属于内部且受 rollout 影响的字段，应现场检查当前 cache，不应把本节数值当成稳定的公开契约。
+
+检查发现全局配置仍残留两项旧设置：
+
+- `model = "gpt-5.5"`；
+- `model_instructions_file` 指向“降智”文章中发布的 GPT-5.5 instruction 副本。
+
+这个 override 并不是当前 5.6 Sol prompt。它在内容和结构上都已有差异，并缺少当前原生 prompt 中的 skill-usage contract 等部分。`model_instructions_file` 会替换模型内置指令，因此即使切换了模型，保留旧文件仍会把后续模型锁在旧 prompt 上；这一替换语义可在 [Codex 官方配置参考](https://developers.openai.com/codex/config-reference/#configtoml) 中确认。
+
+本机偏好是移除原生 prompt 中的 `## Intermediate commentary` section。这是参考文章后采用的 prompt experiment，不代表已经证明 commentary 必然截断隐藏推理。维护上的关键要求是每次实验都从当前 Sol prompt 出发，不能继续沿用旧 GPT-5.5 副本。
+
+### 已应用的修复
+
+全局配置现使用：
+
+```toml
+model_instructions_file = 'C:\Users\JAZ03\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md'
+
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
+```
+
+替换文件由当前 bundled `gpt-5.6-sol` 的 `base_instructions` 生成，只删除 `## Intermediate commentary` 到 `## Final answer` 之前的内容。本次检查时，原生 base 为 16,299 characters，生成后为 14,955；生成文件 SHA-256 为 `891867fd3815eecf80dbedd5072b3c72917bae9e0c9c64ab6495e4391314c059`。旧 GPT-5.5 文件只作为历史材料保留。`xhigh` 是本机 reasoning preference，不属于 prompt transformation。
+
+Codex 或 Sol 更新后，应重新生成文件，不要手工维护整份复制 prompt：
+
+```powershell
+.\scripts\update-sol-prompt.ps1 `
+  -OutputPath "$env:USERPROFILE\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md"
+```
+
+脚本会优先发现最新的 Desktop-managed CLI，读取 `debug models --bundled`，在 section boundaries 发生变化时拒绝生成，并输出 source/generated hash 供 review。
+
+### 检查与验证
+
+优先使用 Codex 自身提供的诊断入口：
+
+```powershell
+codex --version
+Get-Command codex -All
+codex doctor --json
+codex debug prompt-input -c 'model="gpt-5.6-sol"' "prompt audit"
+
+$catalog = Get-Content -Raw "$env:USERPROFILE\.codex\models_cache.json" | ConvertFrom-Json
+$sol = $catalog.models | Where-Object slug -eq "gpt-5.6-sol"
+$sol | Select-Object slug, display_name, default_reasoning_level, context_window, effective_context_window_percent, default_verbosity, multi_agent_version
+$sol.base_instructions
+```
+
+`models_cache.json` 是内部缓存，只适合诊断，不应作为仓库中的固定源文件。`codex debug prompt-input` 用于查看生成后的 developer/user prompt layers，包括权限、环境上下文和已加载的 `AGENTS.md`；模型目录则提供 model-specific base instructions。全局配置变更后需要新建 task，让新的 prompt layers 重新构造。
+
+比较 prompt 前先确认 executable provenance。本机同时存在 npm CLI、Desktop package CLI 和 Desktop-managed CLI，版本并不一致；`PATH` 中优先命中的 `codex` 与当前 Desktop runtime 的 bundled model catalog 也不完全相同。应结合 `codex doctor --json`、`Get-Command codex -All` 和 app cache 判断，不能默认每个本地 `codex.exe` 都代表正在运行的 task。
+
+这个 source repo 本身包含将被安装到全局的同一份 `AGENTS.md`。当全局副本和仓库副本一致时，在本仓库内维护它可能同时加载两份；这是 source package 的局部重复。普通项目仍会加载全局文件和该项目自己的 guidance。
+
+后续模型升级时，先检查 `model_instructions_file`，再从当前模型条目重新生成 override，并执行配对的 before/after eval。Codex Candy 适合作为 smoke signal，但不能单独承担 acceptance：固定 client、provider、model、reasoning 和任务设置，重复运行多个任务，并分别比较 correctness、latency、output tokens 与 reasoning tokens。每次 prompt experiment 都应保留 source hash、generated hash、removed section、rollback path 和前后测量结果。
 
 ## 维护说明
 

@@ -32,6 +32,9 @@ This repo contains a small Codex instruction system, not a full framework:
   workflows.
 - `skills/experiment/`: experiment design, execution, analysis, reproducibility,
   benchmarks, datasets, ablations, model evaluation, and run artifacts.
+- `scripts/update-sol-prompt.ps1`: regenerates the current Sol prompt override
+  from the Desktop-managed bundled catalog and removes only the commentary
+  section.
 
 ## What Lives Here
 
@@ -46,6 +49,8 @@ skills/
   agent-team-dev/
   story-telling/
   experiment/
+scripts/
+  update-sol-prompt.ps1
 ```
 
 ## How The System Is Intended To Work
@@ -137,8 +142,117 @@ also useful background: [openai/role-specific-plugins](https://github.com/openai
   not as the default operating policy for this repo.
 - [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide):
   useful context for Codex system-prompt configuration, Codex Candy evaluation,
-  and the surrounding discussion. Treat configuration changes from articles as
+  and the surrounding discussion. Its copied GPT-5.5 prompt is now a historical
+  case, not a current template. Treat configuration changes from articles as
   hypotheses to verify locally before adopting.
+
+## GPT-5.6 Sol Update (2026-07-10)
+
+### Local Finding
+
+The Codex App model catalog currently exposes `gpt-5.6-sol` as a model-specific
+agent runtime with its own built-in instructions, reasoning presets, tool mode,
+context policy, and multi-agent behavior. On the machine inspected for this
+update, the app cache reported a 372k context window, a 95% effective context
+window, `low` default reasoning, reasoning levels through `ultra`, low default
+verbosity, code-mode tools, and a catalog-selected multi-agent version. These
+are internal, rollout-sensitive fields: inspect the current cache instead of
+treating the values in this note as a stable public contract.
+
+The active global configuration still contained two stale settings:
+
+- `model = "gpt-5.5"`;
+- `model_instructions_file` pointing to the GPT-5.5 instruction copy published
+  in the downgrade article.
+
+The override was not the current 5.6 Sol prompt. It differed in both content and
+structure and omitted current native sections such as the model's skill-usage
+contract. Because `model_instructions_file` replaces the model's built-in
+instructions, retaining that file pins future models to an old prompt even when
+the model selector changes. This replacement behavior is documented in the
+[official Codex configuration reference](https://developers.openai.com/codex/config-reference/#configtoml).
+
+The local preference is to remove the native `## Intermediate commentary`
+section. This is an intentional prompt experiment inspired by the article, not
+proof that commentary necessarily truncates hidden reasoning. The important
+maintenance rule is that the experiment must start from the current Sol prompt,
+not the older GPT-5.5 copy.
+
+### Repair Applied
+
+The global configuration now uses:
+
+```toml
+model_instructions_file = 'C:\Users\JAZ03\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md'
+
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
+```
+
+The replacement file is generated from the current bundled `gpt-5.6-sol`
+`base_instructions`, with only the text from `## Intermediate commentary` up to
+`## Final answer` removed. At the inspected version, the native base contained
+16,299 characters and the generated prompt contained 14,955; the generated file
+SHA-256 was `891867fd3815eecf80dbedd5072b3c72917bae9e0c9c64ab6495e4391314c059`.
+The old GPT-5.5 file remains only as historical material. `xhigh` is the selected
+local reasoning preference, not part of the prompt transformation.
+
+Regenerate the file after Codex or Sol updates instead of editing a copied
+prompt by hand:
+
+```powershell
+.\scripts\update-sol-prompt.ps1 `
+  -OutputPath "$env:USERPROFILE\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md"
+```
+
+The script discovers the newest Desktop-managed CLI when possible, reads
+`debug models --bundled`, refuses to continue if the expected section boundaries
+changed, and reports source/generated hashes for review.
+
+### Inspect And Verify
+
+Use the client itself as the primary diagnostic surface:
+
+```powershell
+codex --version
+Get-Command codex -All
+codex doctor --json
+codex debug prompt-input -c 'model="gpt-5.6-sol"' "prompt audit"
+
+$catalog = Get-Content -Raw "$env:USERPROFILE\.codex\models_cache.json" | ConvertFrom-Json
+$sol = $catalog.models | Where-Object slug -eq "gpt-5.6-sol"
+$sol | Select-Object slug, display_name, default_reasoning_level, context_window, effective_context_window_percent, default_verbosity, multi_agent_version
+$sol.base_instructions
+```
+
+`models_cache.json` is an internal cache, so use it for diagnosis rather than as
+a committed source file. `codex debug prompt-input` shows the generated
+developer/user prompt layers, including permissions, environment context, and
+loaded `AGENTS.md`; the model catalog exposes the model-specific base
+instructions. After changing global configuration, start a new task so it is
+constructed from the updated layers.
+
+Check executable provenance before comparing prompts. This machine had an npm
+CLI, the Desktop-packaged CLI, and a Desktop-managed CLI at different versions;
+the `codex` found first on `PATH` did not expose the same bundled model catalog
+as the active Desktop runtime. Use `codex doctor --json`, `Get-Command codex
+-All`, and the app cache together rather than assuming every local `codex.exe`
+represents the running task.
+
+This source repository also contains the same `AGENTS.md` that it installs
+globally. When the global copy and repository copy are identical, Codex may load
+both while working inside this repository. That duplication is specific to
+maintaining the source package; normal projects load the global file plus their
+own project guidance.
+
+When upgrading again, first check for a stale `model_instructions_file`, then
+regenerate the override from the current model entry and run paired before/after
+evals. Codex Candy is a useful smoke signal, not sufficient acceptance by
+itself: keep client, provider, model, reasoning, and task settings fixed; use
+repeated runs and more than one task; and compare correctness, latency, output
+tokens, and reasoning tokens separately. Keep the source hash, generated hash,
+removed section, rollback path, and before/after measurements with each prompt
+experiment.
 
 ## Maintenance Notes
 
