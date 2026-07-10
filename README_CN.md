@@ -19,7 +19,6 @@
 - `skills/agent-team-dev/`: 较大的仓库或项目工程工作流，包括 planner 主导协调、side-agent 分发、review loop 和 acceptance check。
 - `skills/story-telling/`: long-form structured writing 和 narrative synthesis，用于 RFC、设计文档、proposal、research narrative 和 revision workflow。
 - `skills/experiment/`: experiment design、execution、analysis、reproducibility、benchmark、dataset、ablation、model evaluation 和 run artifact。
-- `scripts/update-sol-prompt.ps1`: 从 Desktop-managed bundled catalog 重新生成当前 Sol prompt override，并且只移除 commentary section。
 
 ## 文件结构
 
@@ -34,8 +33,6 @@ skills/
   agent-team-dev/
   story-telling/
   experiment/
-scripts/
-  update-sol-prompt.ps1
 ```
 
 ## 系统如何工作
@@ -111,21 +108,47 @@ Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin te
 ### 修复步骤
 
 1. 关闭正在运行的 Codex task，或者准备在修改后新建 task。
-2. 在本仓库根目录生成 override：
+2. 先确认要使用哪一个 Codex executable 的 bundled catalog：
 
 ```powershell
-.\scripts\update-sol-prompt.ps1
+Get-Command codex -All
+codex doctor --json
 ```
 
-脚本默认写入：
+不要默认认为 `PATH` 中第一个 `codex` 就是 Desktop-managed runtime。检查路径后明确设置 executable：
 
-```text
-%USERPROFILE%\.codex\prompts\gpt-5.6-sol-base-without-commentary.md
+```powershell
+$CodexExe = "C:\path\to\the\verified\codex.exe"
 ```
 
-脚本会优先发现最新的 Desktop-managed CLI，读取 `debug models --bundled`；如果预期的 section boundaries 已改变，它会拒绝生成。JSON 输出会记录 source prompt hash、generated prompt hash、executable path、model 和 character counts。
+3. 逐行检查并执行以下可见命令。它们读取 bundled model catalog、选择 Sol、验证两个 section boundaries、只移除 commentary section，并在 `%USERPROFILE%\.codex\prompts` 下写入一个 prompt 文件：
 
-3. 把生成文件的绝对路径加入 `%USERPROFILE%\.codex\config.toml`：
+```powershell
+$catalog = (& $CodexExe debug models --bundled) | ConvertFrom-Json
+$base = [string](
+  $catalog.models |
+    Where-Object slug -eq "gpt-5.6-sol" |
+    Select-Object -ExpandProperty base_instructions
+)
+
+$start = $base.IndexOf("## Intermediate commentary", [StringComparison]::Ordinal)
+$end = $base.IndexOf("## Final answer", [StringComparison]::Ordinal)
+if ($start -lt 0 -or $end -le $start) {
+  throw "Expected commentary section boundaries were not found."
+}
+
+$custom = $base.Remove($start, $end - $start)
+$output = Join-Path $env:USERPROFILE ".codex\prompts\gpt-5.6-sol-base-without-commentary.md"
+New-Item -ItemType Directory -Force -Path (Split-Path $output) | Out-Null
+[IO.File]::WriteAllText($output, $custom, [Text.UTF8Encoding]::new($false))
+
+Get-Item $output
+Get-FileHash $output -Algorithm SHA256
+```
+
+本仓库刻意不提供可执行 installer 或 prompt-update script。命令保留在 README 中，用户可以逐步审查和执行。
+
+4. 把生成文件的绝对路径加入 `%USERPROFILE%\.codex\config.toml`：
 
 ```toml
 model_instructions_file = 'C:\Users\<username>\.codex\prompts\gpt-5.6-sol-base-without-commentary.md'
@@ -136,13 +159,7 @@ model_reasoning_effort = "xhigh"
 
 把 `<username>` 替换为 Windows 账户名。`xhigh` 是可选的本机 reasoning preference，不属于 prompt transformation。
 
-4. 新建 Codex task。现有或恢复的旧 task 可能继续保留创建时序列化的 prompt。
-
-如果自动发现选择了错误的 CLI，可以明确指定 executable：
-
-```powershell
-.\scripts\update-sol-prompt.ps1 -CodexExe "C:\path\to\codex.exe"
-```
+5. 新建 Codex task。现有或恢复的旧 task 可能继续保留创建时序列化的 prompt。
 
 ### 检查与验证
 
@@ -162,7 +179,7 @@ $sol.base_instructions
 
 `models_cache.json` 是内部缓存，只适合诊断，不应作为仓库中的固定源文件。`codex debug prompt-input` 用于查看生成后的 developer/user prompt layers，包括权限、环境上下文和已加载的 `AGENTS.md`；模型目录则提供 model-specific base instructions。全局配置变更后需要新建 task，让新的 prompt layers 重新构造。
 
-比较 prompt 前先确认 executable provenance。npm CLI、Desktop package CLI 和 Desktop-managed CLI 可能同时存在且版本不同。应结合生成脚本返回的 `codex_exe`、`codex doctor --json`、`Get-Command codex -All` 和 app cache 判断，不能默认 `PATH` 中第一个 `codex` 就代表当前 Desktop runtime。
+比较 prompt 前先确认 executable provenance。npm CLI、Desktop package CLI 和 Desktop-managed CLI 可能同时存在且版本不同。应结合 `codex doctor --json`、`Get-Command codex -All` 和 app cache 判断，不能默认 `PATH` 中第一个 `codex` 就代表当前 Desktop runtime。
 
 后续模型升级时，先检查 `model_instructions_file`，再从当前模型条目重新生成 override，并执行配对的 before/after eval。Codex Candy 适合作为 smoke signal，但不能单独承担 acceptance：固定 client、provider、model、reasoning 和任务设置，重复运行多个任务，并分别比较 correctness、latency、output tokens 与 reasoning tokens。每次 prompt experiment 都应保留 source hash、generated hash、removed section、rollback path 和前后测量结果。
 

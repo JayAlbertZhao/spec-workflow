@@ -32,9 +32,6 @@ This repo contains a small Codex instruction system, not a full framework:
   workflows.
 - `skills/experiment/`: experiment design, execution, analysis, reproducibility,
   benchmarks, datasets, ablations, model evaluation, and run artifacts.
-- `scripts/update-sol-prompt.ps1`: regenerates the current Sol prompt override
-  from the Desktop-managed bundled catalog and removes only the commentary
-  section.
 
 ## What Lives Here
 
@@ -49,8 +46,6 @@ skills/
   agent-team-dev/
   story-telling/
   experiment/
-scripts/
-  update-sol-prompt.ps1
 ```
 
 ## How The System Is Intended To Work
@@ -165,24 +160,52 @@ GPT-5.5 prompt from the referenced article.
 ### Repair Procedure
 
 1. Close active Codex tasks or plan to start a new task after the change.
-2. From this repository, generate the override:
+2. Identify the exact Codex executable whose bundled catalog you want to use:
 
 ```powershell
-.\scripts\update-sol-prompt.ps1
+Get-Command codex -All
+codex doctor --json
 ```
 
-By default, the script writes:
+Do not assume the first `codex` on `PATH` is the Desktop-managed runtime. Review
+the paths and set the executable explicitly:
 
-```text
-%USERPROFILE%\.codex\prompts\gpt-5.6-sol-base-without-commentary.md
+```powershell
+$CodexExe = "C:\path\to\the\verified\codex.exe"
 ```
 
-The script discovers the newest Desktop-managed CLI when possible, reads
-`debug models --bundled`, and refuses to generate a file if the expected section
-boundaries have changed. Its JSON output records the source prompt hash,
-generated prompt hash, executable path, model, and character counts.
+3. Run the following visible commands line by line. They read the bundled model
+catalog, select Sol, verify both section boundaries, remove only the commentary
+section, and write one prompt file under `%USERPROFILE%\.codex\prompts`:
 
-3. Add the generated file's absolute path to `%USERPROFILE%\.codex\config.toml`:
+```powershell
+$catalog = (& $CodexExe debug models --bundled) | ConvertFrom-Json
+$base = [string](
+  $catalog.models |
+    Where-Object slug -eq "gpt-5.6-sol" |
+    Select-Object -ExpandProperty base_instructions
+)
+
+$start = $base.IndexOf("## Intermediate commentary", [StringComparison]::Ordinal)
+$end = $base.IndexOf("## Final answer", [StringComparison]::Ordinal)
+if ($start -lt 0 -or $end -le $start) {
+  throw "Expected commentary section boundaries were not found."
+}
+
+$custom = $base.Remove($start, $end - $start)
+$output = Join-Path $env:USERPROFILE ".codex\prompts\gpt-5.6-sol-base-without-commentary.md"
+New-Item -ItemType Directory -Force -Path (Split-Path $output) | Out-Null
+[IO.File]::WriteAllText($output, $custom, [Text.UTF8Encoding]::new($false))
+
+Get-Item $output
+Get-FileHash $output -Algorithm SHA256
+```
+
+This repository intentionally ships no executable installer or prompt-update
+script. The commands stay in the README so users can inspect and run each step
+individually.
+
+4. Add the generated file's absolute path to `%USERPROFILE%\.codex\config.toml`:
 
 ```toml
 model_instructions_file = 'C:\Users\<username>\.codex\prompts\gpt-5.6-sol-base-without-commentary.md'
@@ -194,15 +217,8 @@ model_reasoning_effort = "xhigh"
 Replace `<username>` with the Windows account name. `xhigh` is an optional local
 reasoning preference and is not part of the prompt transformation.
 
-4. Start a new Codex task. Existing and resumed tasks may retain the prompt
+5. Start a new Codex task. Existing and resumed tasks may retain the prompt
 serialized when they were created.
-
-If automatic CLI discovery selects the wrong installation, pass the executable
-explicitly:
-
-```powershell
-.\scripts\update-sol-prompt.ps1 -CodexExe "C:\path\to\codex.exe"
-```
 
 ### Inspect And Verify
 
@@ -229,9 +245,9 @@ constructed from the updated layers.
 
 Check executable provenance before comparing prompts. npm, Desktop-packaged,
 and Desktop-managed Codex installations can coexist at different versions. Use
-the generator's `codex_exe` result, `codex doctor --json`, `Get-Command codex
--All`, and the app cache together rather than assuming the first `codex` on
-`PATH` represents the active Desktop runtime.
+`codex doctor --json`, `Get-Command codex -All`, and the app cache together
+rather than assuming the first `codex` on `PATH` represents the active Desktop
+runtime.
 
 When upgrading again, first check for a stale `model_instructions_file`, then
 regenerate the override from the current model entry and run paired before/after
