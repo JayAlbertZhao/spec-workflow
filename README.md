@@ -141,7 +141,7 @@ also useful background: [openai/role-specific-plugins](https://github.com/openai
   case, not a current template. Treat configuration changes from articles as
   hypotheses to verify locally before adopting.
 
-## fix manualguide for codex
+## Repair Instructions for Codex
 
 ### Why This Repair Exists
 

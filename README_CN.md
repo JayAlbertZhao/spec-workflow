@@ -97,7 +97,7 @@ Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin te
 - [Everything Claude Code / ECC](https://github.com/affaan-m/ECC): 另一套 agent-harness workflow paradigm。它适合研究更完整的系统设计，包括 skills、agents、hooks、rules、memory、verification loops、security posture、research-first development、parallelization 和 cross-harness packaging。主要 tradeoff 是完整范式 token-intensive 且 operationally heavy。更适合作为 comparison system 和 mechanisms source，而不是本 repo 默认 operating policy。
 - [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide): Codex system-prompt configuration、Codex Candy evaluation 及相关讨论的有用上下文。其中复制的 GPT-5.5 prompt 现在属于历史案例，不应继续作为当前模板。文章里的配置修改应先当作 hypothesis，本地验证后再采用。
 
-## fix manualguide for codex
+## Repair Instructions for Codex
 
 ### 为什么需要这个修复
 
