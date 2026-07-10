@@ -148,66 +148,61 @@ also useful background: [openai/role-specific-plugins](https://github.com/openai
 
 ## GPT-5.6 Sol Update (2026-07-10)
 
-### Local Finding
+### Why This Repair Exists
 
-The Codex App model catalog currently exposes `gpt-5.6-sol` as a model-specific
-agent runtime with its own built-in instructions, reasoning presets, tool mode,
-context policy, and multi-agent behavior. On the machine inspected for this
-update, the app cache reported a 372k context window, a 95% effective context
-window, `low` default reasoning, reasoning levels through `ultra`, low default
-verbosity, code-mode tools, and a catalog-selected multi-agent version. These
-are internal, rollout-sensitive fields: inspect the current cache instead of
-treating the values in this note as a stable public contract.
-
-The active global configuration still contained two stale settings:
-
-- `model = "gpt-5.5"`;
-- `model_instructions_file` pointing to the GPT-5.5 instruction copy published
-  in the downgrade article.
-
-The override was not the current 5.6 Sol prompt. It differed in both content and
-structure and omitted current native sections such as the model's skill-usage
-contract. Because `model_instructions_file` replaces the model's built-in
-instructions, retaining that file pins future models to an old prompt even when
-the model selector changes. This replacement behavior is documented in the
+`model_instructions_file` replaces the model's built-in instructions. A prompt
+copied from an older model can therefore keep overriding Sol after the model
+selector changes, leaving new native behavior such as updated skill contracts
+behind. This replacement behavior is documented in the
 [official Codex configuration reference](https://developers.openai.com/codex/config-reference/#configtoml).
 
-The local preference is to remove the native `## Intermediate commentary`
-section. This is an intentional prompt experiment inspired by the article, not
-proof that commentary necessarily truncates hidden reasoning. The important
-maintenance rule is that the experiment must start from the current Sol prompt,
-not the older GPT-5.5 copy.
+This repair is for users who intentionally want to remove Sol's native
+`## Intermediate commentary` section. It generates a new override from the
+current bundled `gpt-5.6-sol` prompt and removes only the text between
+`## Intermediate commentary` and `## Final answer`. It does not reuse the older
+GPT-5.5 prompt from the referenced article.
 
-### Repair Applied
+### Repair Procedure
 
-The global configuration now uses:
+1. Close active Codex tasks or plan to start a new task after the change.
+2. From this repository, generate the override:
+
+```powershell
+.\scripts\update-sol-prompt.ps1
+```
+
+By default, the script writes:
+
+```text
+%USERPROFILE%\.codex\prompts\gpt-5.6-sol-base-without-commentary.md
+```
+
+The script discovers the newest Desktop-managed CLI when possible, reads
+`debug models --bundled`, and refuses to generate a file if the expected section
+boundaries have changed. Its JSON output records the source prompt hash,
+generated prompt hash, executable path, model, and character counts.
+
+3. Add the generated file's absolute path to `%USERPROFILE%\.codex\config.toml`:
 
 ```toml
-model_instructions_file = 'C:\Users\JAZ03\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md'
+model_instructions_file = 'C:\Users\<username>\.codex\prompts\gpt-5.6-sol-base-without-commentary.md'
 
 model = "gpt-5.6-sol"
 model_reasoning_effort = "xhigh"
 ```
 
-The replacement file is generated from the current bundled `gpt-5.6-sol`
-`base_instructions`, with only the text from `## Intermediate commentary` up to
-`## Final answer` removed. At the inspected version, the native base contained
-16,299 characters and the generated prompt contained 14,955; the generated file
-SHA-256 was `891867fd3815eecf80dbedd5072b3c72917bae9e0c9c64ab6495e4391314c059`.
-The old GPT-5.5 file remains only as historical material. `xhigh` is the selected
-local reasoning preference, not part of the prompt transformation.
+Replace `<username>` with the Windows account name. `xhigh` is an optional local
+reasoning preference and is not part of the prompt transformation.
 
-Regenerate the file after Codex or Sol updates instead of editing a copied
-prompt by hand:
+4. Start a new Codex task. Existing and resumed tasks may retain the prompt
+serialized when they were created.
+
+If automatic CLI discovery selects the wrong installation, pass the executable
+explicitly:
 
 ```powershell
-.\scripts\update-sol-prompt.ps1 `
-  -OutputPath "$env:USERPROFILE\Documents\Codex\private\gpt-5.6-sol-base-without-commentary.md"
+.\scripts\update-sol-prompt.ps1 -CodexExe "C:\path\to\codex.exe"
 ```
-
-The script discovers the newest Desktop-managed CLI when possible, reads
-`debug models --bundled`, refuses to continue if the expected section boundaries
-changed, and reports source/generated hashes for review.
 
 ### Inspect And Verify
 
@@ -232,18 +227,11 @@ loaded `AGENTS.md`; the model catalog exposes the model-specific base
 instructions. After changing global configuration, start a new task so it is
 constructed from the updated layers.
 
-Check executable provenance before comparing prompts. This machine had an npm
-CLI, the Desktop-packaged CLI, and a Desktop-managed CLI at different versions;
-the `codex` found first on `PATH` did not expose the same bundled model catalog
-as the active Desktop runtime. Use `codex doctor --json`, `Get-Command codex
--All`, and the app cache together rather than assuming every local `codex.exe`
-represents the running task.
-
-This source repository also contains the same `AGENTS.md` that it installs
-globally. When the global copy and repository copy are identical, Codex may load
-both while working inside this repository. That duplication is specific to
-maintaining the source package; normal projects load the global file plus their
-own project guidance.
+Check executable provenance before comparing prompts. npm, Desktop-packaged,
+and Desktop-managed Codex installations can coexist at different versions. Use
+the generator's `codex_exe` result, `codex doctor --json`, `Get-Command codex
+-All`, and the app cache together rather than assuming the first `codex` on
+`PATH` represents the active Desktop runtime.
 
 When upgrading again, first check for a stale `model_instructions_file`, then
 regenerate the override from the current model entry and run paired before/after
@@ -253,6 +241,9 @@ repeated runs and more than one task; and compare correctness, latency, output
 tokens, and reasoning tokens separately. Keep the source hash, generated hash,
 removed section, rollback path, and before/after measurements with each prompt
 experiment.
+
+To roll back, remove `model_instructions_file` from `config.toml` and start a new
+task. Codex will return to the model's unmodified built-in instructions.
 
 ## Maintenance Notes
 
