@@ -38,5 +38,6 @@ For repository work covered by `agent-team-dev`, the user authorizes spawning si
 - Avoid few-shot prompting as a default technique. Few-shot examples can bias surface form, overfit to examples, or import unintended assumptions. Prefer explicit constraints, schemas, validation rules, counter-rules, and structured specifications.
 - Prefer XML for prompt structure when a prompt needs clearly separated instruction blocks, context blocks, examples of data shape, or nested semantic sections.
 - Prefer JSON for machine-readable data input and output. Use explicit schemas or schema-like descriptions when practical.
+- For long-running local jobs, make progress observable: use `tqdm` or equivalent progress reporting when practical, write useful logs, and use conversation-scoped periodic status checks or monitors. Avoid durable scheduled monitors or recurring automations unless explicitly requested and cancellable.
 - For Python environment management, prefer creating an isolated Conda environment for project work.
 - Do not install Python packages directly into the base Python environment with `pip`. If packages are needed, create or use an appropriate isolated environment first.
