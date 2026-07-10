@@ -97,7 +97,7 @@ Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin te
 - [Everything Claude Code / ECC](https://github.com/affaan-m/ECC): 另一套 agent-harness workflow paradigm。它适合研究更完整的系统设计，包括 skills、agents、hooks、rules、memory、verification loops、security posture、research-first development、parallelization 和 cross-harness packaging。主要 tradeoff 是完整范式 token-intensive 且 operationally heavy。更适合作为 comparison system 和 mechanisms source，而不是本 repo 默认 operating policy。
 - [OpenAI Codex AI 降智解决方案、原因解析与系统提示词修改指南](https://dpit.lib00.com/zh/content/1242/uncovering-the-reason-behind-openai-codex-ai-downgrade-system-prompt-configuration-guide): Codex system-prompt configuration、Codex Candy evaluation 及相关讨论的有用上下文。其中复制的 GPT-5.5 prompt 现在属于历史案例，不应继续作为当前模板。文章里的配置修改应先当作 hypothesis，本地验证后再采用。
 
-## GPT-5.6 Sol 更新（2026-07-10）
+## fix manualguide for codex
 
 ### 为什么需要这个修复
 
@@ -105,85 +105,26 @@ Product Design 的更广义背景可以参考 OpenAI 的 role-specific plugin te
 
 这个方案面向明确希望移除 Sol 原生 `## Intermediate commentary` section 的用户。它从当前 bundled `gpt-5.6-sol` prompt 生成新的 override，只删除 `## Intermediate commentary` 到 `## Final answer` 之间的内容，不复用参考文章中的旧 GPT-5.5 prompt。
 
-### 修复步骤
+### Codex 操作指南
 
-1. 关闭正在运行的 Codex task，或者准备在修改后新建 task。
-2. 先确认要使用哪一个 Codex executable 的 bundled catalog：
+当用户要求应用这个修复时，Codex 应当：
 
-```powershell
-Get-Command codex -All
-codex doctor --json
-```
+1. 检查当前 Codex 安装、全局 `config.toml`、可用时的 task metadata，以及 Desktop-managed model catalog。不能默认 `PATH` 中第一个 `codex` 就是 Codex App 使用的 runtime。
+2. 读取当前 bundled `gpt-5.6-sol` 的 `base_instructions`。`models_cache.json` 只作为诊断状态使用，不得修改。
+3. 确认 source 中恰好存在一个 `## Intermediate commentary` section，且其后存在 `## Final answer`。marker 缺失、重复或顺序异常时停止，不写文件。
+4. 生成 minimal-difference prompt，只删除从 `## Intermediate commentary` 开始到 `## Final answer` 之前的内容，保留 `## Final answer` 及其后续内容。
+5. 把生成文件写入用户自己的 Codex home，优先使用 `~/.codex/prompts/gpt-5.6-sol-base-without-commentary.md`；如果用户已经指定其他 private path，则沿用用户路径。
+6. 在用户全局 `config.toml` 中把 `model_instructions_file` 更新为生成文件的绝对路径。保留其他无关配置；除非用户明确要求，否则不要改变 model 和 reasoning preference。
+7. 验证 source/generated hash，确认 commentary 已移除且 `## Final answer` 仍存在，运行 `codex doctor`，并向用户报告实际使用的路径和证据。
+8. 告知用户新建 task。现有或恢复的旧 task 可能继续保留创建时序列化的 prompt。
 
-不要默认认为 `PATH` 中第一个 `codex` 就是 Desktop-managed runtime。检查路径后明确设置 executable：
+不得执行从本仓库下载的脚本，不得复用旧模型的完整 prompt，不得硬编码其他用户的 private path，不得修改 model cache，也不得把 config parse 成功当作模型质量已经改善的证明。
 
-```powershell
-$CodexExe = "C:\path\to\the\verified\codex.exe"
-```
+### 验收与回滚
 
-3. 逐行检查并执行以下可见命令。它们读取 bundled model catalog、选择 Sol、验证两个 section boundaries、只移除 commentary section，并在 `%USERPROFILE%\.codex\prompts` 下写入一个 prompt 文件：
+验收要求包括：prompt 来源是当前已安装的 Sol catalog、只删除一个目标 section、全局 config 有效，并完成 fresh-task check。Codex Candy 可以作为 smoke signal；质量结论需要在固定 client、provider、model、reasoning 和 task settings 的条件下进行配对 before/after runs。
 
-```powershell
-$catalog = (& $CodexExe debug models --bundled) | ConvertFrom-Json
-$base = [string](
-  $catalog.models |
-    Where-Object slug -eq "gpt-5.6-sol" |
-    Select-Object -ExpandProperty base_instructions
-)
-
-$start = $base.IndexOf("## Intermediate commentary", [StringComparison]::Ordinal)
-$end = $base.IndexOf("## Final answer", [StringComparison]::Ordinal)
-if ($start -lt 0 -or $end -le $start) {
-  throw "Expected commentary section boundaries were not found."
-}
-
-$custom = $base.Remove($start, $end - $start)
-$output = Join-Path $env:USERPROFILE ".codex\prompts\gpt-5.6-sol-base-without-commentary.md"
-New-Item -ItemType Directory -Force -Path (Split-Path $output) | Out-Null
-[IO.File]::WriteAllText($output, $custom, [Text.UTF8Encoding]::new($false))
-
-Get-Item $output
-Get-FileHash $output -Algorithm SHA256
-```
-
-本仓库刻意不提供可执行 installer 或 prompt-update script。命令保留在 README 中，用户可以逐步审查和执行。
-
-4. 把生成文件的绝对路径加入 `%USERPROFILE%\.codex\config.toml`：
-
-```toml
-model_instructions_file = 'C:\Users\<username>\.codex\prompts\gpt-5.6-sol-base-without-commentary.md'
-
-model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
-```
-
-把 `<username>` 替换为 Windows 账户名。`xhigh` 是可选的本机 reasoning preference，不属于 prompt transformation。
-
-5. 新建 Codex task。现有或恢复的旧 task 可能继续保留创建时序列化的 prompt。
-
-### 检查与验证
-
-优先使用 Codex 自身提供的诊断入口：
-
-```powershell
-codex --version
-Get-Command codex -All
-codex doctor --json
-codex debug prompt-input -c 'model="gpt-5.6-sol"' "prompt audit"
-
-$catalog = Get-Content -Raw "$env:USERPROFILE\.codex\models_cache.json" | ConvertFrom-Json
-$sol = $catalog.models | Where-Object slug -eq "gpt-5.6-sol"
-$sol | Select-Object slug, display_name, default_reasoning_level, context_window, effective_context_window_percent, default_verbosity, multi_agent_version
-$sol.base_instructions
-```
-
-`models_cache.json` 是内部缓存，只适合诊断，不应作为仓库中的固定源文件。`codex debug prompt-input` 用于查看生成后的 developer/user prompt layers，包括权限、环境上下文和已加载的 `AGENTS.md`；模型目录则提供 model-specific base instructions。全局配置变更后需要新建 task，让新的 prompt layers 重新构造。
-
-比较 prompt 前先确认 executable provenance。npm CLI、Desktop package CLI 和 Desktop-managed CLI 可能同时存在且版本不同。应结合 `codex doctor --json`、`Get-Command codex -All` 和 app cache 判断，不能默认 `PATH` 中第一个 `codex` 就代表当前 Desktop runtime。
-
-后续模型升级时，先检查 `model_instructions_file`，再从当前模型条目重新生成 override，并执行配对的 before/after eval。Codex Candy 适合作为 smoke signal，但不能单独承担 acceptance：固定 client、provider、model、reasoning 和任务设置，重复运行多个任务，并分别比较 correctness、latency、output tokens 与 reasoning tokens。每次 prompt experiment 都应保留 source hash、generated hash、removed section、rollback path 和前后测量结果。
-
-需要回滚时，从 `config.toml` 删除 `model_instructions_file` 并新建 task，Codex 就会恢复使用模型未修改的内置指令。
+需要回滚时，从全局 `config.toml` 删除 `model_instructions_file` 并新建 task，Codex 应恢复使用模型未修改的内置指令。
 
 ## 维护说明
 

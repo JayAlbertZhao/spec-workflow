@@ -141,7 +141,7 @@ also useful background: [openai/role-specific-plugins](https://github.com/openai
   case, not a current template. Treat configuration changes from articles as
   hypotheses to verify locally before adopting.
 
-## GPT-5.6 Sol Update (2026-07-10)
+## fix manualguide for codex
 
 ### Why This Repair Exists
 
@@ -157,109 +157,47 @@ current bundled `gpt-5.6-sol` prompt and removes only the text between
 `## Intermediate commentary` and `## Final answer`. It does not reuse the older
 GPT-5.5 prompt from the referenced article.
 
-### Repair Procedure
+### Codex Operator Guide
 
-1. Close active Codex tasks or plan to start a new task after the change.
-2. Identify the exact Codex executable whose bundled catalog you want to use:
+When asked to apply this repair, Codex should:
 
-```powershell
-Get-Command codex -All
-codex doctor --json
-```
+1. Inspect the active Codex installation, current global `config.toml`, current
+   task metadata when available, and the Desktop-managed model catalog. Do not
+   assume the first `codex` on `PATH` is the runtime used by the Codex App.
+2. Read the current bundled `gpt-5.6-sol` `base_instructions`. Treat
+   `models_cache.json` as diagnostic state only; never edit it.
+3. Verify that the source contains exactly one `## Intermediate commentary`
+   section followed by `## Final answer`. Stop without writing if either marker
+   is missing, duplicated, or reordered.
+4. Generate a minimal-difference prompt by removing only the text from
+   `## Intermediate commentary` up to, but not including, `## Final answer`.
+5. Write the generated prompt under the user's Codex home, preferably
+   `~/.codex/prompts/gpt-5.6-sol-base-without-commentary.md`, unless the user has
+   already chosen another private path.
+6. Update `model_instructions_file` in the user's global `config.toml` to the
+   generated file's absolute path. Preserve unrelated settings. Keep the model
+   and reasoning preference unchanged unless the user asks to change them.
+7. Verify the source and generated hashes, confirm that commentary is absent and
+   `## Final answer` remains, run `codex doctor`, and report the exact paths and
+   evidence used.
+8. Tell the user to start a new task. Existing and resumed tasks may retain the
+   prompt serialized when they were created.
 
-Do not assume the first `codex` on `PATH` is the Desktop-managed runtime. Review
-the paths and set the executable explicitly:
+Do not execute scripts downloaded from this repository, reuse an older model's
+full prompt, hard-code another user's private path, modify the model cache, or
+claim that a config parse alone proves model-quality improvement.
 
-```powershell
-$CodexExe = "C:\path\to\the\verified\codex.exe"
-```
+### Acceptance And Rollback
 
-3. Run the following visible commands line by line. They read the bundled model
-catalog, select Sol, verify both section boundaries, remove only the commentary
-section, and write one prompt file under `%USERPROFILE%\.codex\prompts`:
+Acceptance requires a prompt derived from the currently installed Sol catalog,
+an exact one-section removal, a valid global config, and a fresh-task check.
+Codex Candy may be used as a smoke signal, but quality claims require paired
+before/after runs with fixed client, provider, model, reasoning, and task
+settings.
 
-```powershell
-$catalog = (& $CodexExe debug models --bundled) | ConvertFrom-Json
-$base = [string](
-  $catalog.models |
-    Where-Object slug -eq "gpt-5.6-sol" |
-    Select-Object -ExpandProperty base_instructions
-)
-
-$start = $base.IndexOf("## Intermediate commentary", [StringComparison]::Ordinal)
-$end = $base.IndexOf("## Final answer", [StringComparison]::Ordinal)
-if ($start -lt 0 -or $end -le $start) {
-  throw "Expected commentary section boundaries were not found."
-}
-
-$custom = $base.Remove($start, $end - $start)
-$output = Join-Path $env:USERPROFILE ".codex\prompts\gpt-5.6-sol-base-without-commentary.md"
-New-Item -ItemType Directory -Force -Path (Split-Path $output) | Out-Null
-[IO.File]::WriteAllText($output, $custom, [Text.UTF8Encoding]::new($false))
-
-Get-Item $output
-Get-FileHash $output -Algorithm SHA256
-```
-
-This repository intentionally ships no executable installer or prompt-update
-script. The commands stay in the README so users can inspect and run each step
-individually.
-
-4. Add the generated file's absolute path to `%USERPROFILE%\.codex\config.toml`:
-
-```toml
-model_instructions_file = 'C:\Users\<username>\.codex\prompts\gpt-5.6-sol-base-without-commentary.md'
-
-model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
-```
-
-Replace `<username>` with the Windows account name. `xhigh` is an optional local
-reasoning preference and is not part of the prompt transformation.
-
-5. Start a new Codex task. Existing and resumed tasks may retain the prompt
-serialized when they were created.
-
-### Inspect And Verify
-
-Use the client itself as the primary diagnostic surface:
-
-```powershell
-codex --version
-Get-Command codex -All
-codex doctor --json
-codex debug prompt-input -c 'model="gpt-5.6-sol"' "prompt audit"
-
-$catalog = Get-Content -Raw "$env:USERPROFILE\.codex\models_cache.json" | ConvertFrom-Json
-$sol = $catalog.models | Where-Object slug -eq "gpt-5.6-sol"
-$sol | Select-Object slug, display_name, default_reasoning_level, context_window, effective_context_window_percent, default_verbosity, multi_agent_version
-$sol.base_instructions
-```
-
-`models_cache.json` is an internal cache, so use it for diagnosis rather than as
-a committed source file. `codex debug prompt-input` shows the generated
-developer/user prompt layers, including permissions, environment context, and
-loaded `AGENTS.md`; the model catalog exposes the model-specific base
-instructions. After changing global configuration, start a new task so it is
-constructed from the updated layers.
-
-Check executable provenance before comparing prompts. npm, Desktop-packaged,
-and Desktop-managed Codex installations can coexist at different versions. Use
-`codex doctor --json`, `Get-Command codex -All`, and the app cache together
-rather than assuming the first `codex` on `PATH` represents the active Desktop
-runtime.
-
-When upgrading again, first check for a stale `model_instructions_file`, then
-regenerate the override from the current model entry and run paired before/after
-evals. Codex Candy is a useful smoke signal, not sufficient acceptance by
-itself: keep client, provider, model, reasoning, and task settings fixed; use
-repeated runs and more than one task; and compare correctness, latency, output
-tokens, and reasoning tokens separately. Keep the source hash, generated hash,
-removed section, rollback path, and before/after measurements with each prompt
-experiment.
-
-To roll back, remove `model_instructions_file` from `config.toml` and start a new
-task. Codex will return to the model's unmodified built-in instructions.
+To roll back, remove `model_instructions_file` from global `config.toml` and
+start a new task. Codex should then return to the model's unmodified built-in
+instructions.
 
 ## Maintenance Notes
 
